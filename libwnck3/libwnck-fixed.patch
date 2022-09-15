@@ -1,0 +1,36 @@
+diff '--color=auto' -r -u libwnck/libwnck/class-group.c libwnck-hacked/libwnck/class-group.c
+--- libwnck/libwnck/class-group.c	2022-08-15 16:28:40.006782389 +0800
++++ libwnck-hacked/libwnck/class-group.c	2022-08-15 16:21:46.009804569 +0800
+@@ -68,6 +68,7 @@
+ static GHashTable *class_group_hash = NULL;
+ 
+ static void wnck_class_group_finalize    (GObject             *object);
++static void window_weak_notify_cb (gpointer  data, GObject  *where_the_window_was);
+ 
+ enum {
+   NAME_CHANGED,
+@@ -141,6 +142,14 @@
+ }
+ 
+ static void
++remove_weakref_handler (gpointer key,
++                       gpointer value,
++                       gpointer user_data)
++{
++  g_object_weak_unref (key, window_weak_notify_cb, user_data);
++}
++
++static void
+ wnck_class_group_finalize (GObject *object)
+ {
+   WnckClassGroup *class_group;
+@@ -170,6 +179,9 @@
+       g_hash_table_foreach (class_group->priv->window_icon_handlers,
+                             remove_signal_handler,
+                             NULL);
++      g_hash_table_foreach (class_group->priv->window_icon_handlers,
++                            remove_weakref_handler,
++                            class_group);
+       g_hash_table_destroy (class_group->priv->window_icon_handlers);
+       class_group->priv->window_icon_handlers = NULL;
+     }
